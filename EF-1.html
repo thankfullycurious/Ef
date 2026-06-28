@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EF</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f0e8;
+  --surface: #ede8de;
+  --surface2: #e4ddd0;
+  --ink: #2a2420;
+  --ink-dim: rgba(42,36,32,0.45);
+  --ink-faint: rgba(42,36,32,0.15);
+  --rust: #8b4a2f;
+  --rust-soft: rgba(139,74,47,0.1);
+  --sage: #4a6741;
+  --sage-soft: rgba(74,103,65,0.1);
+  --clay: #9e6b3e;
+  --clay-soft: rgba(158,107,62,0.1);
+  --breath: #5e7a8a;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 60px;
+}
+
+/* TOP */
+.top-bar {
+  width: 100%;
+  max-width: 480px;
+  padding: 32px 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.brand {
+  font-family: 'Literata', serif;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1;
+}
+.brand span {
+  font-style: italic;
+  color: var(--rust);
+}
+
+.evidence-counter {
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: right;
+  line-height: 1.5;
+}
+.evidence-counter strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 300;
+  font-family: 'Literata', serif;
+  color: var(--sage);
+}
+
+/* ORB */
+.orb-zone {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 20px;
+  gap: 14px;
+}
+
+.orb {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1.5px solid var(--ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  flex-shrink: 0;
+}
+.orb:hover { background: var(--surface); border-color: var(--rust); }
+.orb.listening {
+  background: var(--rust-soft);
+  border-color: var(--rust);
+  animation: breathe 2s ease-in-out infinite;
+}
+.orb.processing {
+  background: var(--clay-soft);
+  border-color: var(--clay);
+}
+@keyframes breathe {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139,74,47,0.2); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(139,74,47,0); }
+}
+.orb svg { width: 32px; height: 32px; }
+
+.orb-label {
+  font-size: 12px;
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* TRANSCRIPT */
+#live-text {
+  width: 100%;
+  max-width: 480px;
+  min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-family: 'Literata', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-dim);
+  line-height: 1.6;
+  text-align: center;
+}
+#live-text.visible {
+  max-height: 120px;
+  padding: 0 0 16px;
+}
+
+/* BREATH PROMPT */
+#breath-card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(94,122,138,0.08);
+  border: 1px solid rgba(94,122,138,0.2);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+#breath-card.show { display: flex; animation: fadeUp 0.4s ease-out; }
+.breath-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--breath);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.breath-text {
+  font-family: 'Literata', serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.breath-dismiss {
+  font-size: 12px;
+  color: var(--breath);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  width: fit-content;
+}
+
+/* RESPONSE CARD */
+#response-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--ink-faint);
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+#response-card.show { display: flex; animation: fadeUp 0.4s ease-out; }
+
+.response-reflection {
+  font-family: 'Literata', serif;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.response-next {
+  font-size: 14px;
+  color: var(--ink-dim);
+  line-height: 1.6;
+  padding-top: 2px;
+  border-top: 1px solid var(--ink-faint);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* TASKS */
+.task-list {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section-head {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  padding: 20px 0 8px;
+}
+
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--ink-faint);
+  cursor: pointer;
+  transition: opacity 0.2s;
+  animation: fadeUp 0.3s ease-out;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row:hover { opacity: 0.75; }
+.task-row.done { opacity: 0.35; }
+.task-row.done .task-name { text-decoration: line-through; }
+
+.task-tick {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-faint);
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.task-row.done .task-tick {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.task-tick-check { display: none; }
+.task-row.done .task-tick-check { display: block; }
+
+.task-content { flex: 1; min-width: 0; }
+.task-type {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.task-type.body { color: var(--rust); }
+.task-type.five { color: var(--clay); }
+.task-type.task { color: var(--ink-dim); }
+.task-type.rest { color: var(--breath); }
+.task-name {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.task-note {
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+  font-family: 'Literata', serif;
+  font-style: italic;
+}
+.task-time {
+  font-size: 12px;
+  color: var(--ink-dim);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* EVIDENCE LOG */
+.evidence-section {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 32px;
+  border-top: 1px solid var(--ink-faint);
+  padding-top: 20px;
+  display: none;
+}
+.evidence-section.show { display: block; }
+.evidence-head {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  margin-bottom: 14px;
+}
+.evidence-entry {
+  font-family: 'Literata', serif;
+  font-size: 14px;
+  color: var(--ink-dim);
+  font-style: italic;
+  line-height: 1.6;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink-faint);
+  animation: fadeUp 0.3s ease-out;
+}
+.evidence-entry:last-child { border-bottom: none; }
+.evidence-entry .ev-time {
+  font-family: 'DM Sans', sans-serif;
+  font-style: normal;
+  font-size: 10px;
+  color: var(--sage);
+  margin-bottom: 2px;
+  letter-spacing: 0.05em;
+}
+
+/* EMPTY */
+.empty {
+  width: 100%;
+  max-width: 480px;
+  padding: 40px 0;
+  text-align: center;
+  font-family: 'Literata', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-dim);
+  line-height: 1.8;
+}
+
+/* UTIL */
+.chip-row {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+.chip {
+  background: var(--surface);
+  border: 1px solid var(--ink-faint);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--rust); color: var(--rust); }
+
+.no-speech-note {
+  font-size: 12px;
+  color: var(--rust);
+  text-align: center;
+  padding: 8px 0;
+  width: 100%;
+  max-width: 480px;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">E<span>F</span></div>
+  <div class="evidence-counter">
+    <strong id="ev-count">0</strong>
+    things done today
+  </div>
+</div>
+
+<div class="orb-zone">
+  <div class="orb" id="orb" onclick="toggleListen()">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="2" width="6" height="13" rx="3" fill="#2a2420" opacity="0.7"/>
+      <path d="M5 11a7 7 0 0014 0" stroke="#2a2420" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <line x1="12" y1="18" x2="12" y2="22" stroke="#2a2420" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+      <line x1="9" y1="22" x2="15" y2="22" stroke="#2a2420" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+    </svg>
+  </div>
+  <div class="orb-label" id="orb-label">tap and talk</div>
+</div>
+
+<div id="live-text"></div>
+
+<div id="breath-card">
+  <div class="breath-title">Before anything</div>
+  <div class="breath-text" id="breath-text"></div>
+  <div class="breath-dismiss" onclick="dismissBreath()">I've done this — show me my tasks</div>
+</div>
+
+<div id="response-card">
+  <div class="response-reflection" id="reflection-text"></div>
+  <div class="response-next" id="next-text"></div>
+</div>
+
+<div class="chip-row" id="chips">
+  <div class="chip" onclick="fakeInput(`I haven't eaten yet and I need to take my meds, I've got emails to send and the laundry has been sitting there for two days, I'm feeling a bit all over the place`)">scattered + behind</div>
+  <div class="chip" onclick="fakeInput(`meds done, need to eat something, got a PHN call at 2, I want to do some writing this afternoon and I need to put the washing on, feeling okay`)">okay but busy</div>
+  <div class="chip" onclick="fakeInput(`I'm really overwhelmed, too many thoughts, body feels wired, I don't know where to start, I want to rest but I can't`)">overwhelmed</div>
+  <div class="chip" onclick="fakeInput(`good day actually, meds taken, ate breakfast, want to write for an hour then maybe a walk, laundry needs folding`)">good day</div>
+</div>
+
+<div id="no-speech" class="no-speech-note" style="display:none">Voice needs Chrome or Safari. Use the chips above to try it.</div>
+
+<div class="task-list" id="task-list"></div>
+
+<div class="evidence-section" id="evidence-section">
+  <div class="evidence-head">Evidence you show up for yourself</div>
+  <div id="evidence-list"></div>
+</div>
+
+<script>
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRec) document.getElementById('no-speech').style.display = 'block';
+
+let tasks = JSON.parse(localStorage.getItem('ef-tasks') || '[]');
+let evidence = JSON.parse(localStorage.getItem('ef-evidence') || '[]');
+let listening = false;
+let rec = null;
+let currentText = '';
+
+// Evidence counter
+function updateCounter() {
+  const doneTodayCount = tasks.filter(t => t.done).length;
+  document.getElementById('ev-count').textContent = evidence.filter(e => {
+    const today = new Date().toDateString();
+    return new Date(e.ts).toDateString() === today;
+  }).length + doneTodayCount;
+}
+updateCounter();
+
+let silenceTimer = null;
+
+function toggleListen() {
+  if (listening) { finishListen(); return; }
+  if (!SpeechRec) return;
+  currentText = '';
+  listening = true;
+  startRec();
+  document.getElementById('orb').classList.add('listening');
+  document.getElementById('orb-label').textContent = 'listening… tap to stop';
+}
+
+function startRec() {
+  if (!listening) return;
+  rec = new SpeechRec();
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.lang = 'en-AU';
+
+  rec.onresult = e => {
+    let final = '', interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    const chunk = final || interim;
+    if (chunk) {
+      currentText = (currentText + ' ' + chunk).trim();
+      showLive(currentText);
+    }
+    // reset silence timer on any speech
+    clearTimeout(silenceTimer);
+    if (final) {
+      // after final result, wait 2.5s for more speech before finishing
+      silenceTimer = setTimeout(() => { if (listening) finishListen(); }, 2500);
+    }
+  };
+
+  rec.onend = () => {
+    // mobile kills recognition — restart if still listening and no silence timer running
+    if (listening && !silenceTimer) {
+      setTimeout(startRec, 150);
+    }
+  };
+
+  rec.onerror = e => {
+    if (e.error === 'no-speech' && listening) {
+      setTimeout(startRec, 150);
+    } else {
+      stopState();
+    }
+  };
+
+  try { rec.start(); } catch(e) { stopState(); }
+}
+
+function finishListen() {
+  clearTimeout(silenceTimer);
+  silenceTimer = null;
+  listening = false;
+  if (rec) { try { rec.stop(); } catch(e){} }
+  if (currentText.trim()) {
+    document.getElementById('orb').classList.add('processing');
+    document.getElementById('orb').classList.remove('listening');
+    document.getElementById('orb-label').textContent = 'thinking…';
+    callClaude(currentText.trim());
+  } else {
+    stopState();
+  }
+}
+
+function stopState() {
+  clearTimeout(silenceTimer);
+  silenceTimer = null;
+  listening = false;
+  document.getElementById('orb').classList.remove('listening','processing');
+  document.getElementById('orb-label').textContent = 'tap and talk';
+  hideLive();
+}
+
+function showLive(t) {
+  const el = document.getElementById('live-text');
+  el.textContent = '"' + t + '"';
+  el.classList.add('visible');
+}
+function hideLive() {
+  document.getElementById('live-text').classList.remove('visible');
+}
+
+async function fakeInput(text) {
+  showLive(text);
+  document.getElementById('orb').classList.add('processing');
+  document.getElementById('orb-label').textContent = 'thinking…';
+  await callClaude(text);
+}
+
+const SYSTEM = `You are EF — a regulated day companion for a woman with AuDHD who works from home. She is on steroids today so may be wired, scattered, or both. Your entire job is to reflect her own wisdom and needs back to her — not advise, not coach. Mirror. Steady. Warm but not saccharine.
+
+You receive her voice input — stream of consciousness, fragments, tasks mixed with feelings — and return a JSON object (ONLY JSON, no markdown, no preamble):
+
+{
+  "tone": "scattered" | "overwhelmed" | "okay" | "good" | "wired",
+  "breath_needed": true | false,
+  "breath_prompt": "a single gentle breath instruction if needed, written in her voice, max 2 sentences",
+  "reflection": "1-2 sentences that mirror back what she said, in her own register. Not advice. Just: here's what you said, heard clearly.",
+  "next_nudge": "one warm sentence about what matters first right now — not a list, just the next thing",
+  "tasks": [
+    {
+      "name": "short task name",
+      "type": "body" | "five" | "task" | "rest",
+      "note": "optional extra detail she mentioned",
+      "time": "HH:MM or empty",
+      "duration": "X min or empty",
+      "priority": 1-5
+    }
+  ]
+}
+
+Task types:
+- body: meds, food, water, movement, breath — always priority 1-2
+- five: 5-minute jobs (laundry, quick email, dishes) — priority 3
+- task: work tasks, calls, writing — priority 2-4
+- rest: intentional rest, nap, wind down — always valid, never skip
+
+If she sounds overwhelmed or wired: breath_needed = true. Always surface body tasks first. Rest is always a legitimate task. Never add tasks she didn't mention. Keep task names short (4 words max). Reflect her actual words back in the reflection — she should feel heard before she feels organised.`;
+
+async function callClaude(text) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    handleResponse(parsed);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('orb-label').textContent = 'hmm, try again';
+    setTimeout(stopState, 2000);
+  } finally {
+    document.getElementById('orb').classList.remove('processing');
+  }
+}
+
+// --- VOICE OUTPUT ---
+let selectedVoice = null;
+
+function loadVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer: Australian female, then English female, then any English
+  const preferred = [
+    v => v.lang === 'en-AU' && v.name.toLowerCase().includes('female'),
+    v => v.lang === 'en-AU',
+    v => v.lang.startsWith('en') && (v.name.toLowerCase().includes('samantha') || v.name.toLowerCase().includes('karen') || v.name.toLowerCase().includes('moira') || v.name.toLowerCase().includes('female')),
+    v => v.lang.startsWith('en-'),
+    v => v.lang.startsWith('en'),
+  ];
+  for (const fn of preferred) {
+    const match = voices.find(fn);
+    if (match) { selectedVoice = match; break; }
+  }
+}
+
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speak(text, rate = 0.88, pitch = 1.0) {
+  if (!text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  if (selectedVoice) utt.voice = selectedVoice;
+  utt.rate = rate;
+  utt.pitch = pitch;
+  utt.volume = 1;
+  window.speechSynthesis.speak(utt);
+}
+
+function speakSequence(parts) {
+  // parts: [{text, rate, pitch, delay}]
+  window.speechSynthesis.cancel();
+  let offset = 0;
+  parts.forEach(p => {
+    setTimeout(() => speak(p.text, p.rate || 0.88, p.pitch || 1.0), offset + (p.delay || 0));
+    // rough estimate: 80ms per char
+    offset += (p.text.length * 80) + (p.delay || 0) + 400;
+  });
+}
+
+function handleResponse(data) {
+  stopState();
+  hideLive();
+
+  // Build speech sequence
+  const speechParts = [];
+
+  // Breath card
+  if (data.breath_needed && data.breath_prompt) {
+    document.getElementById('breath-text').textContent = data.breath_prompt;
+    document.getElementById('breath-card').classList.add('show');
+    speechParts.push({ text: data.breath_prompt, rate: 0.75, pitch: 1.0, delay: 300 });
+  }
+
+  // Reflection card
+  if (data.reflection) {
+    document.getElementById('reflection-text').textContent = data.reflection;
+    document.getElementById('next-text').textContent = data.next_nudge || '';
+    document.getElementById('response-card').classList.add('show');
+    const breathDelay = (data.breath_needed && data.breath_prompt) ? (data.breath_prompt.length * 80 + 2000) : 0;
+    speechParts.push({ text: data.reflection, rate: 0.88, pitch: 1.0, delay: breathDelay + 500 });
+    if (data.next_nudge) {
+      speechParts.push({ text: data.next_nudge, rate: 0.85, pitch: 0.98, delay: breathDelay + (data.reflection.length * 80) + 1200 });
+    }
+  }
+
+  // Speak it all
+  if (speechParts.length) {
+    // flatten into sequence with absolute offsets already computed above
+    window.speechSynthesis.cancel();
+    let cumulative = 0;
+    speechParts.forEach(p => {
+      const delay = p.delay || cumulative;
+      setTimeout(() => {
+        const utt = new SpeechSynthesisUtterance(p.text);
+        if (selectedVoice) utt.voice = selectedVoice;
+        utt.rate = p.rate || 0.88;
+        utt.pitch = p.pitch || 1.0;
+        utt.volume = 1;
+        window.speechSynthesis.speak(utt);
+      }, delay);
+      cumulative = (p.delay || 0) + (p.text.length * 75) + 600;
+    });
+  }
+
+  // Tasks
+  if (data.tasks && data.tasks.length) {
+    const newTasks = data.tasks.map(t => ({
+      id: Date.now() + Math.random(),
+      name: t.name,
+      type: t.type || 'task',
+      note: t.note || '',
+      time: t.time || '',
+      duration: t.duration || '',
+      priority: t.priority || 3,
+      done: false
+    }));
+    // merge, sort by priority then time
+    tasks = [...tasks, ...newTasks].sort((a,b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      if (a.time && b.time) return a.time.localeCompare(b.time);
+      return 0;
+    });
+    saveTasks();
+    renderTasks();
+  }
+
+  // Hide chips after first use
+  document.getElementById('chips').style.display = 'none';
+}
+
+function dismissBreath() {
+  document.getElementById('breath-card').classList.remove('show');
+  addEvidence('took a breath before starting');
+  speak("Good. Let's go.", 0.85, 1.0);
+}
+
+function toggleDone(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  if (task.done) {
+    addEvidence(`${task.name.toLowerCase()}`);
+    const affirmations = [
+      "Yes. That's you showing up.",
+      "Done. That counts.",
+      "You did that.",
+      "Evidence added.",
+      "That's real. Well done."
+    ];
+    speak(affirmations[Math.floor(Math.random() * affirmations.length)], 0.88, 1.0);
+  }
+  saveTasks();
+  renderTasks();
+  updateCounter();
+}
+
+function addEvidence(text) {
+  evidence.unshift({ text, ts: Date.now() });
+  if (evidence.length > 30) evidence = evidence.slice(0, 30);
+  localStorage.setItem('ef-evidence', JSON.stringify(evidence));
+  renderEvidence();
+  updateCounter();
+}
+
+const TYPE_LABELS = { body: 'body', five: '5 min', task: 'task', rest: 'rest' };
+
+function renderTasks() {
+  const el = document.getElementById('task-list');
+  const pending = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done);
+  const all = [...pending, ...done];
+
+  if (!all.length) {
+    el.innerHTML = '<div class="empty">Tell me what\'s in your head.<br>I\'ll help you find what matters first.</div>';
+    return;
+  }
+
+  let html = '';
+  if (pending.length) {
+    html += '<div class="section-head">Next</div>';
+    pending.forEach(t => html += taskHTML(t));
+  }
+  if (done.length) {
+    html += '<div class="section-head">Done</div>';
+    done.forEach(t => html += taskHTML(t));
+  }
+  el.innerHTML = html;
+}
+
+function taskHTML(t) {
+  const timeStr = t.time ? fmt12(t.time) : '';
+  const durStr = t.duration || '';
+  const meta = [timeStr, durStr].filter(Boolean).join(' · ');
+  return `<div class="task-row${t.done ? ' done' : ''}" onclick="toggleDone(${t.id})">
+    <div class="task-tick">
+      <svg class="task-tick-check" width="10" height="8" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="task-content">
+      <div class="task-type ${t.type}">${TYPE_LABELS[t.type] || 'task'}</div>
+      <div class="task-name">${t.name}</div>
+      ${t.note ? `<div class="task-note">${t.note}</div>` : ''}
+    </div>
+    ${meta ? `<div class="task-time">${meta}</div>` : ''}
+  </div>`;
+}
+
+function renderEvidence() {
+  const today = new Date().toDateString();
+  const todayEv = evidence.filter(e => new Date(e.ts).toDateString() === today);
+  const sec = document.getElementById('evidence-section');
+  if (!todayEv.length) { sec.classList.remove('show'); return; }
+  sec.classList.add('show');
+  document.getElementById('evidence-list').innerHTML = todayEv.map(e => {
+    const t = new Date(e.ts);
+    const time = t.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+    return `<div class="evidence-entry"><div class="ev-time">${time}</div>you ${e.text}</div>`;
+  }).join('');
+}
+
+function fmt12(t) {
+  const [h,m] = t.split(':').map(Number);
+  const ap = h < 12 ? 'am' : 'pm';
+  return `${h%12||12}${m?':'+String(m).padStart(2,'0'):''}${ap}`;
+}
+
+function saveTasks() {
+  localStorage.setItem('ef-tasks', JSON.stringify(tasks));
+}
+
+renderTasks();
+renderEvidence();
+</script>
+</body>
+</html>
